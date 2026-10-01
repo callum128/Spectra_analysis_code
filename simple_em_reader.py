@@ -13,6 +13,7 @@ import toml
 import plotly.express as px
 import plotly.tools as tls
 import plotly.offline as pyo
+from adjustText import adjust_text
 
 
 from scipy import sparse
@@ -22,7 +23,10 @@ from scipy.signal import find_peaks
 from scipy.optimize import linear_sum_assignment
 from pathlib import Path
 
-plt.rcParams['font.family'] = 'Nimbus Roman'
+#plt.rcParams['font.family'] = 'Nimbus Roman'
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Helvetica', 'Arial', 'DejaVu Sans']
+plt.rcParams['mathtext.fontset'] = 'dejavusans' 
 
 SITE_2 = {
     'Jon_emission_names': {
@@ -37,6 +41,7 @@ SITE_2 = {
  'Scope_emission_names':{
      '1D2-3H4':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/1D2-3H4_580.2_emission_scope_amp_13_07_2026_12_03_47_480.toml',
      '1D2-3H5':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/1D2-3H5_606.35_emission_scope_amp_22_06_2026_14_10_14_891.toml',
+     '1D2-3H5_end':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/1D2-3H5_end_606.50_emission_scope_amp_29_06_2026_11_12_59_398.toml',
      '1D2-3H6':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/1D2-3H6_606.45_emission_scope_amp_13_07_2026_14_53_02_724.toml',
      '1D2-3F2':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/1D2-3F2_606.5_emission_scope_amp_bigslits_18_08_2026_10_02_52_585.toml',
      '1D2-3F3+3F4':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/1D2-3F3_606.5_emission_scope_17_08_2026_13_02_34_028.toml',
@@ -51,15 +56,17 @@ SITE_2 = {
  'Scope_excitation_names':{
      '1D2:R590':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_1D2_from_1D2-1G4_excitation_amp_26_08_2026_09_35_06_735.toml',
      '1D2:R610':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_1D2_from_1D2-1G4_excitation_R610dye_26_08_2026_15_05_25_131.toml',
-     '3P0:C481':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_3P0_from_1D2-1G4_excitation_C481_27_08_2026_11_36_09_371.toml',
-     '1I6:C460':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_1I6_from_1D2-1G4_excitation_C460_07_09_2026_11_15_51_423.toml',
-     '3P2:C440':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_3P2_from_1D2-1G4_excitation_C440TEST_07_09_2026_16_06_14_032.toml' #test
+     '3P0:C500':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_3P0_from_1D2-1G4_excitation_C500_11_09_2026_15_15_27_709.toml', #4nm left, after 1/9 motor issue
+     '3P0:C481':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_3P0_rot7_from_1D2-1G4_excitation_C481d_long_18_09_2026_11_48_57_892.toml', #4nm left
+     '1I6:C460':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_1I6_from_1D2-1G4_excitation_C460_07_09_2026_11_15_51_423.toml', #4nm left
+     '3P2:C440':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 2/EX_S2_3P2_from_1D2-1G4_excitation_C440_11_09_2026_09_43_01_266.toml', #4nm left
      }
          }   
 
 SITE_1 = {'Scope_emission_names':{    
     '1D2-3H4':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/Site1/Site1_1D2-3H4_577.0_emission_scope_amp_24_07_2026_09_50_05_490.toml',
     '1D2-3H5':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/Site1/Site1_1D2-3H5_577.1_emission_scope_amp_27_07_2026_09_24_43_045.toml',
+    '1D2-3H5_end':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/Site1/Site1_1D2-3H5_577.1_emission_scope_amp_end_27_07_2026_13_15_33_945.toml',
     '1D2-3H6':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/Site1/Site1_1D2-3H6_577.1_emission_scope_bigslits_28_07_2026_10_28_08_353.toml',
     '1D2-3F2':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/Site1/Site1_1D2-3F2_576.9_emission_scope_amp_bigslits_18_08_2026_14_27_48_441.toml',
     '1D2-3F3+3F4':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Emission/Site1/Site1_1D2-3F3_577.1_emission_scope2_31_07_2026_11_23_04_930.toml',
@@ -72,21 +79,24 @@ SITE_1 = {'Scope_emission_names':{
      'em_move_factors' : {'1D2-3H4':0.05, '1D2-3H5':1.08, '1D2-3H6':1.83, '1D2-3F2':3.04, '1D2-3F3+3F4':3.49, '1D2-1G4':3.34, '3P0-3H5':-0.59, '3P0-3H6':-0.37, 
                 '3P0-3F2':1.73, '3P0-3F3+3F4':-0.60},
     'Scope_excitation_names':{
-        '1D2:R590':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_1D2_from_1D2-1G4_excitationTEST_25_08_2026_14_04_17_027.toml',
+        '1D2:R590':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_1D2_from_1D2-1G4_excitationTEST_25_08_2026_14_04_17_027.toml', #not a test
         '1D2:R610':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_1D2_from_1D2-1G4_excitation_R610dye_27_08_2026_09_19_18_610.toml',
-        '3P0:C481':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_3P0_from_1D2-1G4_excitation_C481_27_08_2026_15_04_57_328.toml',
-        '1I6:C460':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_1I6_from_1D2-1G4_excitation_C460_07_09_2026_13_45_43_970.toml',
+        '3P0:C500':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_3P0_from_1D2-1G4_excitation_C500_14_09_2026_11_31_01_051.toml', #4nm left
+        '3P0:C481':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_3P0_rot7_from_1D2-1G4_excitation_C481d_16_09_2026_10_33_19_737.toml', #4nm left
+        '1I6:C460':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_1I6_from_1D2-1G4_excitation_C460_07_09_2026_13_45_43_970.toml', #4nm left
+        '3P2:C440':'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Scope Excitation/Site 1/EX_S1_3P2_from_1D2-1G4_excitation_C440_11_09_2026_12_46_42_025.toml' #4nm left
+        
         }
         }
 
 ABSORBTION = {'FTIR_absorbtion_names_9':{
-    '3H5':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_MCT_KBr_9K.0.dpt', 1e11, [2050,3540] ],
-    '3H6':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_MCT_KBr_9K.0.dpt', 1e10, [4000,4900] ],
-    '3F2':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_InGaAs_CaF2_9K.0.dpt', 1e10, [4900,5900] ],
+    '3H5':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_MCT_KBr_9K.0.dpt', 1e11, [2050,3400] ],
+    '3H6':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_MCT_KBr_9K.0.dpt', 1e10, [4000,5100] ],
+    '3F2':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_InGaAs_CaF2_9K.0.dpt', 1e10, [4600,6000] ],
     '3F3+3F4':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_InGaAs_CaF2_9K.0.dpt', 1e10, [5900,7800] ],
     '1G4':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_InGaAs_CaF2_9K.0.dpt', 1e9, [9450,10450] ],
     '1D2':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260224_YSO_Pr_SiDiode_CaF2_9K.1.dpt', 1e11, [16200, 17700] ],
-    '3P0':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260312_YSO_Pr_GaP_CaF2UVVIS_9K_512_0.2res.0.dpt',1e10, [20050, 22800] ]
+    '3P0':['/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/FTIR/20260312_YSO_Pr_GaP_CaF2UVVIS_9K_512_0.2res.0.dpt',1e10, [20100, 22800] ]
     }
         }
 
@@ -104,6 +114,17 @@ def loader(site, top, bottom, normalize=False, laser=False, move_factor=0):
         if laser:
             laser_wave = (488.4 + move_factor) if top == '3P0' else 602.6 + move_factor #not laser, from fitting the ground state to zero
             
+        if f'{top}-{bottom}' == '1D2-3H5': #to get end
+            filename2 = SITE_2['Scope_emission_names'][f'{top}-{bottom}_end']
+            
+            data2 = toml.load(filename2)
+            areas2 = np.array(data2['device']['DPO7104_TekTronix_scope']['data']['area']['data'])
+            wavelengths2 = np.array(data2['device']['iHR550']['data']['wavelength (nm)']['data'])
+            
+            wavelengths = np.append(wavelengths, wavelengths2)
+            areas = np.append(areas, areas2)        
+            print('Stiched 3H5 data together!')
+        
     elif site == 1:
         filename = SITE_1['Scope_emission_names'][f'{top}-{bottom}']
         
@@ -113,6 +134,17 @@ def loader(site, top, bottom, normalize=False, laser=False, move_factor=0):
         
         if laser:
             laser_wave = (483.8 + move_factor) if top == '3P0' else 604.5 + move_factor #lowest state, not the highest where the laser was (577), from fitting the ground state to zero
+    
+        if f'{top}-{bottom}' == '1D2-3H5': #to get end
+            filename2 = SITE_1['Scope_emission_names'][f'{top}-{bottom}_end']
+            
+            data2 = toml.load(filename2)
+            areas2 = np.array(data2['device']['DPO7104_TekTronix_scope']['data']['area']['data'])
+            wavelengths2 = np.array(data2['device']['iHR550']['data']['wavelength (nm)']['data'])
+            
+            wavelengths = np.append(wavelengths, wavelengths2)
+            areas = np.append(areas, areas2)        
+            print('Stiched 3H5 data together!')
             
     if laser_wave == 0:
         adjusted_wavenumbers = 1.0e7 / (wavelengths)  #+ move_factor
@@ -126,6 +158,27 @@ def loader(site, top, bottom, normalize=False, laser=False, move_factor=0):
         areas = (areas-min(areas))/max(areas)
         
     return adjusted_wavenumbers, areas
+
+
+def raw_abs_loader(level, normalize=True):
+    info = ABSORBTION['FTIR_absorbtion_names_9'][level]
+    filename = info[0]
+    fitmin = info[2][0]
+    fitmax = info[2][1]
+    
+    data = np.loadtxt(filename, skiprows=0, delimiter=',')
+    wavenumber = data[:,0]
+    intensity = data[:,1]
+    
+    mask = (wavenumber > fitmin) & (wavenumber < fitmax)
+
+    cut_w = wavenumber[mask]
+    cut_i = intensity[mask]
+    
+    if normalize:
+      cut_i = (cut_i-min(cut_i))/max(cut_i)
+    
+    return cut_w, cut_i
 
 
 def abs_loader(level, normalize=True):
@@ -455,13 +508,13 @@ def all_plot(ax):
     return title
 
 def excitation_plotter(site, ax, fit=True):
-    levels = ['1D2', '3P0', '1I6']
-    dyes_dict = {'1D2':['R590', 'R610'], '3P0':['C481'], '1I6':['C460']}
+    levels = ['1D2', '3P0', '1I6', '3P2'] #3P1 is also in here
+    dyes_dict = {'1D2':['R590', 'R610'], '3P0':['C481'], '1I6':['C460'], '3P2':['C440']} #removed C500
     if site == 2:
-        fit_factors = {'R590':-1.9, 'R610':-2.57, 'C481':-0.94, 'C460':1.41}
+        fit_factors = {'R590':-1.9, 'R610':-2.57, 'C500':2.20, 'C481':2.17, 'C460':1.34, 'C440':1.49} 
         up_factor = 0.1
     else:
-        fit_factors = {'R590':-2.14, 'R610':-2.16, 'C481':-0.9, 'C460':1.57}
+        fit_factors = {'R590':-2.14, 'R610':-2.16, 'C500':2.20, 'C481':2.28, 'C460':1.51, 'C440':1.53}
         up_factor = 0
         
     for level in levels:
@@ -576,10 +629,13 @@ def fluorescence_table(site, top, bottom, peaks, labels):
 
 
 def energy_table(site, top, bottom, peaks, labels):
-    fig, ax = plt.subplots(figsize=(4, 3))
+    fig, ax = plt.subplots(figsize=(4, 5))
     ax.axis("off")
     
-    mask = np.char.startswith(labels, '1→')
+    if bottom == '3F3+3F4':
+        mask = np.char.startswith(labels, '1→') + np.char.startswith(labels, '3F4: 1→')
+    else:
+        mask = np.char.startswith(labels, '1→')
     select_peaks = np.array(peaks)[mask]
     select_labels = np.array(labels)[mask]
     
@@ -594,11 +650,36 @@ def energy_table(site, top, bottom, peaks, labels):
         
         
     energies = 1e7/ laser_wave *np.ones_like(wavelengths) - 1.0e7 / (wavelengths) #these are the emission energies, not FTIR!
-    #print(true_energies)
     
+    all_true_data = np.loadtxt(f'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Assignment/site_{site}.txt')
     all_true_energies = np.loadtxt(f'/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Assignment/site_{site}.txt')[:,1]
-    #print(all_true_energies)
-    cost = np.abs(all_true_energies[:, None]-energies[None, :])
+    
+    multiplet = {'3H4':[0,10], '3H5':[10,21], '3H6':[21, 34], '3F2':[34, 39], '3F3+3F4':[39, 55], '1G4':[55, 64]}
+    num_levels = int(bottom[2]) *2 + 1 #2j+1
+    multiplet_true = np.arange(1, num_levels+1)
+    
+    if bottom == '3F3+3F4':
+        multiplet_true = np.arange(1, 17)
+    print(bottom)
+    print(multiplet_true)
+    
+    table_data = [[str(level), "-", "-"] for level in multiplet_true]
+    
+    start = multiplet[bottom][0]
+    stop = multiplet[bottom][1]
+    print(start, stop)
+
+    selected_indices = np.where((all_true_data[:, 0] >= start) & (all_true_data[:, 0] < stop))[0]
+    print(all_true_data[selected_indices])
+    true_energies = all_true_data[selected_indices][:,1]
+    
+    print(true_energies)
+  
+    level_number = all_true_data[:,0][selected_indices]
+    multiplet_number = level_number - level_number[0]+1
+    
+    
+    cost = np.abs(all_true_energies[:, None]-energies[None, :]) #this is now doing nothing!!!
     i, j = linear_sum_assignment(cost)
     
     matched1 = all_true_energies[i]
@@ -614,14 +695,25 @@ def energy_table(site, top, bottom, peaks, labels):
         print(differences)
         print('')
         
-    true_energies = matched1
+    matched_energies = matched1 
     
-    table_data = [[f"{level[2:]}", f"{energy:.1f}"]
-              for level, energy in zip(select_labels, true_energies)]
+    #table_data = [[f"{level[2:]}", f"{energy:.1f}"] for level, energy in zip(select_labels, matched_energies)]
+    
+    for idx, energy, e in zip(multiplet_number, true_energies, matched2):
+    # Convert 1-based level index to 0-based Python list index
+        list_index = int(idx) - 1
+        table_data[list_index][1] = f"{energy:.1f}"
+        table_data[list_index][2] = f"{e:.1f}"
+        
+    for idx, energy in zip(multiplet_number, true_energies):
+    # Convert 1-based level index to 0-based Python list index
+        list_index = int(idx) - 1
+        table_data[list_index][1] = f"{energy:.1f}"
+
     
     table = ax.table(
         cellText=table_data,
-        colLabels=["Level", "FTIR-fit Energy"],
+        colLabels=["Level", "FTIR Energy" ,'Shift Em. Energy'],
         loc="center",
         cellLoc="center"
     )
@@ -723,15 +815,30 @@ def publish_plot_em(site, top, bottom, marks=False):
         x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/site1_all_raw_peaks_guess.toml')[bottom]['guesses']
         labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/site1_all_raw_peaks_guess.toml')[bottom]['labels']    
         
-    wavenumbers, areas = loader(site, top, bottom, normalize=True)    
+    wavenumbers, areas = loader(site, top, bottom, normalize=True)
+    
     peaks = locate_peaks2(wavenumbers, areas, x_guesses)    
     
-    fluorescence_table(site, top, bottom, peaks['x'], labels)
+    fluorescence_table(site, top, bottom, peaks['x'], labels)   
     energy_table(site, top, bottom, peaks['x'], labels)
+
+    parent_dict = {'site 2':{
+        '3H4':[16594, 16505, 16447, 16384],
+        '3H5':[14419, 14393, 14315, 14266, 14243, 14205],
+        '3H6':[12275, 12267, 12216, 12193, 12173, 12037],
+        '3F2':[11381, 11345, 11301, 11231, 11145],
+        },
+        'site 1':{
+        '3H4':[16595, 16541, 16362, 16281],
+        '3H5':[14254, 14223, 14195, 14164],
+        '3H6':[12177, 12154, 12141, 12107],
+        '3F2':[11195, 11016, 10999, 10897, 10786],
+        }
+        }
     
-    suspected_parents = [14419, 14393, 14315, 14266, 14255, 14243, 14205] #change this for each spectra when hunting hotlines
-    phonon_hunter(peaks['x'], suspected_parents, site, top, bottom)
-    
+    #suspected_parents = parent_dict[f'site {site}'][bottom]
+    #phonon_hunter(peaks['x'], suspected_parents, site, top, bottom)
+
     
     fig, ax = plt.subplots(figsize=(14,8))
     ax.plot(wavenumbers, areas, 'k')
@@ -756,36 +863,508 @@ def publish_plot_em(site, top, bottom, marks=False):
                 fontsize=8,
                 color='r',
                 rotation='vertical'
+                )
+            
+    ax.get_yaxis().set_visible(False)
+    if marks:
+        ax.set_ylabel('Fluorescence Intensity (arb. units)', fontsize = 14, labelpad = 3, fontweight='bold')
+        ax.get_yaxis().set_visible(True)
+        ax.grid(True)
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+    
+    ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize = 14, labelpad = 3, fontweight='bold')
+    ax.set_title(f'Site {site}: $^{top[0]}${top[1]}$_{top[2]}$'+r'$\rightarrow$ '+f'$^{bottom[0]}${bottom[1]}$_{bottom[2]}$', y=1, x=0.15, fontweight='bold', fontsize=18)
+    ax.margins(x=0)
+    ax.spines['top'].set_visible(False)
+    #ax.spines['left'].set_visible(False) 
+    ax.spines['right'].set_visible(False) 
+    
+    return f'Site {site} {top}-{bottom} Emission'
+
+def publish_plot_em_clean(site, top, bottom, marks=False):
+    if site == 2:
+        x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/all_raw_peaks_guess.toml')[bottom]['guesses']
+        labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/all_raw_peaks_guess.toml')[bottom]['labels']
+    else:
+        x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/site1_all_raw_peaks_guess.toml')[bottom]['guesses']
+        labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/site1_all_raw_peaks_guess.toml')[bottom]['labels']    
+        
+    wavenumbers, areas = loader(site, top, bottom, normalize=True)    
+    peaks = locate_peaks2(wavenumbers, areas, x_guesses)    
+    
+    
+    fig, ax = plt.subplots(figsize=(14,8))
+    ax.plot(wavenumbers, areas, 'k')
+    for x, y, label in zip(peaks['x'], peaks['y'], labels):
+        if np.char.startswith(label, '1→'):
+            ax.annotate(
+                label[2:],
+                (x, y),
+                textcoords="offset points",
+                xytext=(1,12),
+                ha='center',
+                fontsize=18,
+            )
+    if marks:
+        for x, y in zip(peaks['x'], peaks['y']):
+            ax.annotate(
+                f'{x:.0f}',
+                (x, y),
+                textcoords="offset points",
+                xytext=(0,60),
+                ha='center',
+                fontsize=8,
+                color='r',
+                rotation='vertical'
             )
     
-    ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize = 14, labelpad = 3)
-    ax.set_title(f'Site {site}: $^{top[0]}${top[1]}$_{top[2]}$'+r'$ \rightarrow $ '+f'$^{bottom[0]}${bottom[1]}$_{bottom[2]}$', y=1, x=0.1, fontweight='bold', fontsize=18)
+    #ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize = 18, labelpad = 3, fontweight='bold')
+    ax.tick_params(axis='x', labelsize=16)
+    ax.margins(x=0)
+    ax.set_title(f'Site {site}: $^{top[0]}${top[1]}$_{top[2]}$'+r'$\rightarrow $'+f'$^{bottom[0]}${bottom[1]}$_{bottom[2]}$', y=1, x=0.15, fontweight='bold', fontsize=18)
     ax.get_yaxis().set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.spines['left'].set_visible(False) 
+    #ax.spines['left'].set_visible(False) 
     ax.spines['right'].set_visible(False) 
+    
+    return f'Site {site} {top}-{bottom} Emission'
 
-marks = True
-#publish_plot_em(2, '1D2', '3H4', marks)
-#publish_plot_em(1, '1D2', '3H4', marks)
 
-publish_plot_em(2, '1D2', '3H5', marks)
+def abs_energy_table(table_data, mult):
+    fig_table, ax_table = plt.subplots(figsize=(6, len(table_data)/2 * 0.4 + 1.5))
+    ax_table.axis("off")
+    
+    located_energies = np.array(table_data)[:,0]
+    level_ids = np.array(table_data)[:,1]
+    
+    s1mask = np.char.startswith(level_ids, 'o')
+    s1levels = located_energies[s1mask]
+    s1_ids = level_ids[s1mask]
+    
+    s2mask = np.char.isnumeric(level_ids) | np.char.startswith(level_ids, 's2') #or mask
+    s2levels = located_energies[s2mask]
+    s2_ids = level_ids[s2mask]
+    
+    table_data_s1 = [ [rf"$\underline{{{i[1:]}}}$", e]
+    for e, i in zip(s1levels, s1_ids)
+    ]
+    
+    table1 = ax_table.table(
+        cellText=table_data_s1,
+        colLabels=["Level", "Energy (cm$^{-1}$)"],
+        loc="center",
+        cellLoc="center",
+        colLoc="center",
+    )
+    
+    
+    title1 = f'FTIR {mult} Absorption Site 1'
+    title2 = f'FTIR {mult} Absorption Site 2'
+    if mult == '3P0':
+        title1 = f'FTIR $^{mult[0]}${mult[1]}$_{mult[2]}$, $^3$P$_1$, $^1$I$_6$ and $^3$P$_2$ Absorption Site 1'
+        title2 = f'FTIR $^{mult[0]}${mult[1]}$_{mult[2]}$, $^3$P$_1$, $^1$I$_6$ and $^3$P$_2$ Absorption Site 2'
+    
+    table1.auto_set_font_size(False)
+    table1.set_fontsize(12)
+    table1.scale(1, 1.5)
+    fig_table.suptitle(
+    title1,
+    fontsize=16,
+    fontweight='bold'
+    )
+    
+    fig_table.tight_layout()
+    
+    table_data_s2 = [ [i, e]
+    for e, i in zip(s2levels, s2_ids)
+    ]
+    
+    fig_table, ax_table = plt.subplots(figsize=(6, len(table_data)/2 * 0.4 + 1.5))
+    ax_table.axis("off")
+    
+    table2 = ax_table.table(
+        cellText=table_data_s2,
+        colLabels=["Level", "Energy (cm$^{-1}$)"],
+        loc="center",
+        cellLoc="center",
+        colLoc="center",
+    )
+    
+    table2.auto_set_font_size(False)
+    table2.set_fontsize(12)
+    table2.scale(1, 1.5)
+    fig_table.suptitle(
+    title2,
+    fontsize=16,
+    fontweight='bold'
+    )
+    
+    
+    fig_table.tight_layout()
 
-#publish_plot_em(2, '1D2', '3F2', marks)
-#publish_plot_em(1, '1D2', '3F2', marks)
+
+def publish_plot_ab_clean(mult, marks=False):
+    x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/abs_all_raw_peaks_guess.toml')[mult]['guesses']
+    labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/abs_all_raw_peaks_guess.toml')[mult]['labels']
+    
+    wavenumbers, intensity = raw_abs_loader(mult, False)
+    peaks = locate_peaks2(wavenumbers, -intensity, x_guesses)
+    
+    
+    fig, ax = plt.subplots(figsize=(14,8))
+    ax.plot(wavenumbers, intensity, 'k')
+    
+     # 1. Create an empty list to store the annotation text objects
+    texts = []
+    table_data = []
+    for x, y, label in zip(peaks["x"], peaks["y"], labels):
+        if np.char.startswith(label, "o"):
+            label = rf"$\underline{{{label[1:]}}}$" #site 1 underlined
+        
+        #print(f'{x}: {label}') #should be able to put abs table genetrator here
+        table_data.append([f'{x:.1f}', label])
+        
+        # 2. Append each annotation to the list.
+        # Removed xytext/textcoords so adjustText can manage the spacing dynamically.
+        texts.append(
+            ax.annotate(
+                label,
+                (x, -y),
+                ha="center",
+                va="center",
+                fontsize=18,
+            )
+        )
+    
+    best_adjust = {'3H5':[(1,4),(2,1)], '3H6':[(2,4),(1,4)], '3F2':[(1,6),(1,5)], '3F3+3F4':[(1,1),(2,0)], '1G4':[(1,4),(2,0)], '1D2':[(1,3),(2,0)], '3P0':[(1,3),(2,0)]}
+    viewable_range = {'3H5':[2050, 3350], '3H6':[4200, 5100], '3F2':[4600, 6000], '3F3+3F4':[6300, 7800], '1G4':[9550,10450], '1D2':[16200, 17700], '3P0':[20350, 22580]}
+    
+    # 3. Call adjust_text to automatically repel the labels from each other and the data points
+    adjust_text(
+    texts,
+    x=wavenumbers[::20],  #don't try using all the data, every 20th is good
+    y=intensity[::20],
+    ax=ax,
+    arrowprops=dict(arrowstyle="-", color="k", lw=0.5, alpha=0.5),
+    expand=best_adjust[mult][0], #can try adjusting this
+    force_text=best_adjust[mult][1] #can try adjusting this
+    )
+
+    if marks:
+        for x, y in zip(peaks['x'], peaks['y']):
+            ax.annotate(
+                f'{x:.0f}',
+                (x, -y),
+                textcoords="offset points",
+                xytext=(0,-60),
+                ha='center',
+                fontsize=8,
+                color='r',
+                rotation='vertical'
+            )
+            
+    ax.get_yaxis().set_visible(False)
+    if marks:
+        ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize = 18, labelpad = 3, fontweight='bold')
+        ax.set_ylabel('Transmission Intensity (arb. units)', fontsize = 18, labelpad = 3, fontweight='bold')
+        ax.get_yaxis().set_visible(True)
+        ax.grid(True)
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+    ax.tick_params(axis='x', labelsize=16)
+    ax.set_ylim(bottom=min(intensity)*0.7)
+    ax.set_xlim(viewable_range[mult][0], viewable_range[mult][1])
+    ax.margins(x=0)
+    title = f'Raw Absorption to $^{mult[0]}${mult[1]}$_{mult[2]}$'
+    if mult == '3F3+3F4':
+        title = f'Raw Absorption to $^{mult[0]}${mult[1]}$_{mult[2]}$ and $^{mult[4]}${mult[5]}$_{mult[6]}$'
+    if mult == '3P0':
+        title = f'Raw Absorption to $^{mult[0]}${mult[1]}$_{mult[2]}$, $^3$P$_1$, $^1$I$_6$ and $^3$P$_2$'
+        ax.set_ylim(bottom=min(intensity)-0.005)
+    ax.set_title(title, y=1, x=0.15, fontweight='bold', fontsize=18)
+    
+    ax.spines['top'].set_visible(False)
+    #ax.spines['left'].set_visible(False) 
+    ax.spines['right'].set_visible(False) 
+    
+    #for tables
+    table_data = [
+    [f'{x:.1f}', label]
+    for x, label in zip(peaks["x"], labels)
+    ]
+    
+    abs_energy_table(table_data, mult)
+    
+    return f'FTIR {mult} Absorption 10K'
+
+
+def publish_plot_ab_clean_based(mult, marks=False):
+    x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/abs_all_raw_peaks_guess.toml')[mult]['guesses']
+    labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/abs_all_raw_peaks_guess.toml')[mult]['labels']
+    
+    wavenumbers, intensity = abs_loader(mult, False)
+    peaks = locate_peaks2(wavenumbers, intensity, x_guesses)
+    
+    
+    fig, ax = plt.subplots(figsize=(14,8))
+    ax.plot(wavenumbers, intensity, 'k')
+    
+     # 1. Create an empty list to store the annotation text objects
+    texts = []
+    table_data = []
+    for x, y, label in zip(peaks["x"], peaks["y"], labels):
+        if np.char.startswith(label, "o"):
+            label = rf"$\underline{{{label[1:]}}}$" #site 1 underlined
+        
+        #print(f'{x}: {label}') #should be able to put abs table genetrator here
+        table_data.append([f'{x:.1f}', label])
+        
+        # 2. Append each annotation to the list.
+        # Removed xytext/textcoords so adjustText can manage the spacing dynamically.
+        texts.append(
+            ax.annotate(
+                label,
+                (x, y),
+                ha="center",
+                va="center",
+                fontsize=18,
+            )
+        )
+    
+    best_adjust = {'3H5':[(1,1),(4,4)], '3H6':[(3,1),(4,4)], '3F2':[(1,6),(1,5)], '3F3+3F4':[(2,1),(2,4)], '1G4':[(1,4),(2,0)], '1D2':[(1,3),(2,0)], '3P0':[(1,3),(2,0)]}
+    viewable_range = {'3H5':[2050, 3350], '3H6':[4200, 5100], '3F2':[4600, 6000], '3F3+3F4':[6350, 7700], '1G4':[9550,10450], '1D2':[16300, 17700], '3P0':[20350, 22580]}
+    
+    # 3. Call adjust_text to automatically repel the labels from each other and the data points
+    adjust_text(
+    texts,
+    x=wavenumbers[::20],  #don't try using all the data, every 20th is good
+    y=intensity[::20],
+    ax=ax,
+    arrowprops=dict(arrowstyle="-", color="k", lw=0.5, alpha=0.5),
+    expand=best_adjust[mult][0], #can try adjusting this
+    force_text=best_adjust[mult][1] #can try adjusting this
+    )
+
+    if marks:
+        for x, y in zip(peaks['x'], peaks['y']):
+            ax.annotate(
+                f'{x:.0f}',
+                (x, y),
+                textcoords="offset points",
+                xytext=(0,60),
+                ha='center',
+                fontsize=8,
+                color='r',
+                rotation='vertical'
+            )
+            
+    #ax.get_yaxis().set_visible(False)
+    if marks:
+        ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize = 18, labelpad = 3, fontweight='bold')
+        ax.set_ylabel('Absorption Coefficient (cm$^{-1}$)', fontsize = 18, labelpad = 3, fontweight='bold')
+        #ax.get_yaxis().set_visible(True)
+        ax.grid(True)
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+    ax.tick_params(axis='x', labelsize=16)
+    ax.tick_params(axis='y', labelsize=16)
+    #ax.set_ylim(bottom=min(intensity)*0.7)
+    ax.set_xlim(viewable_range[mult][0], viewable_range[mult][1])
+    ax.margins(x=0)
+    title = f'Absorption to $^{mult[0]}${mult[1]}$_{mult[2]}$'
+    if mult == '3F3+3F4':
+        title = f'Absorption to $^{mult[0]}${mult[1]}$_{mult[2]}$ and $^{mult[4]}${mult[5]}$_{mult[6]}$'
+    if mult == '3P0':
+        title = f'Absorption to $^{mult[0]}${mult[1]}$_{mult[2]}$, $^3$P$_1$, $^1$I$_6$ and $^3$P$_2$'
+        #ax.set_ylim(bottom=min(intensity)-0.005)
+    ax.set_title(title, y=1, x=0.15, fontweight='bold', fontsize=18)
+    
+    ax.spines['top'].set_visible(False)
+    #ax.spines['left'].set_visible(False) 
+    ax.spines['right'].set_visible(False) 
+    
+    #for tables
+    table_data = [
+    [f'{x:.1f}', label]
+    for x, label in zip(peaks["x"], labels)
+    ]
+    
+    #abs_energy_table(table_data, mult)
+    
+    return f'FTIR {mult} Absorption 10K Based'
+
+
+def publish_plot_exc_clean(site, mult, dye, ax, view=(1,0), marks=False):
+    if site == 2:
+        x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/all_raw_peaks_guess.toml')[mult+dye]['guesses']
+        labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/all_raw_peaks_guess.toml')[mult+dye]['labels']
+    else:
+        x_guesses = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/site1_all_raw_peaks_guess.toml')[mult+dye]['guesses']
+        labels = toml.load('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Guesses/site1_all_raw_peaks_guess.toml')[mult+dye]['labels']    
+    
+    wavenumbers, areas = exc_loader2(site, mult, dye)
+    areas = areas * view[0] + view[1]
+    peaks = locate_peaks2(wavenumbers, areas, x_guesses)    
+    
+    
+    #fig, ax = plt.subplots(figsize=(14,8))
+    ax.plot(wavenumbers, areas, 'k', label=f'{dye} Dye')
+    
+     # 1. Create an empty list to store the annotation text objects
+    texts = []
+    table_data = []
+    for x, y, label in zip(peaks["x"], peaks["y"], labels):
+        if np.char.startswith(label, "o"):
+            label = rf"$\underline{{{label[1:]}}}$" #site 1 underlined
+        
+        #print(f'{x}: {label}') #should be able to put abs table genetrator here
+        table_data.append([f'{x:.1f}', label])
+        
+        # 2. Append each annotation to the list.
+        # Removed xytext/textcoords so adjustText can manage the spacing dynamically.
+        texts.append(
+            ax.annotate(
+                label,
+                (x, y),
+                ha="center",
+                va="center",
+                fontsize=18,
+            )
+        )
+    
+    best_adjust = {'1D2':[(4,2),(3,4)], '3P0':[(4,4),(0,0)], '1I6':[(1,3),(2,0)], '3P2':[(1,3),(2,0)]}
+    #viewable_range = {'1D2':[16300, 17600], '3P0':[20350, 22580]}
+    
+    # 3. Call adjust_text to automatically repel the labels from each other and the data points
+    adjust_text(
+    texts,
+    x=wavenumbers[::20],  #don't try using all the data, every 20th is good
+    y=areas[::20],
+    ax=ax,
+    arrowprops=dict(arrowstyle="-", color="k", lw=0.5, alpha=0.5),
+    expand=best_adjust[mult][0], #can try adjusting this
+    force_text=best_adjust[mult][1] #can try adjusting this
+    )
+
+    if marks:
+        for x, y in zip(peaks['x'], peaks['y']):
+            ax.annotate(
+                f'{x:.0f}',
+                (x, y),
+                textcoords="offset points",
+                xytext=(0,40),
+                ha='center',
+                fontsize=8,
+                color='r',
+                rotation='vertical'
+            )
+            
+    ax.get_yaxis().set_visible(False)
+    if marks:
+        ax.set_xlabel('Wavenumber (cm$^{-1}$)', fontsize = 18, labelpad = 3, fontweight='bold')
+        ax.set_ylabel(' Fluorescence Intensity (arb. units)', fontsize = 18, labelpad = 3, fontweight='bold')
+        ax.get_yaxis().set_visible(True)
+        ax.grid(True)
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+    ax.tick_params(axis='x', labelsize=16)
+    #ax.set_ylim(bottom=min(intensity)*0.7)
+    #ax.set_xlim(viewable_range[mult][0], viewable_range[mult][1])
+    ax.margins(x=0)
+    title = f'Site {site}: Excitation from $^{mult[0]}${mult[1]}$_{mult[2]}$ with different dyes' #to ($^1$D$_2$ →$^1$G$_4$)
+    if mult == '3P2':
+        title = f'Site {site}: Excitation from $^3$P$_0$, $^3$P$_1$, $^1$I$_6$ and $^3$P$_2$ with different dyes'
+    ax.set_title(title, y=1, x=0.35, fontweight='bold', fontsize=18)
+    
+    ax.spines['top'].set_visible(False)
+    #ax.spines['left'].set_visible(False) 
+    ax.spines['right'].set_visible(False) 
+    
+    #for tables
+    table_data = [
+    [f'{x:.1f}', label]
+    for x, label in zip(peaks["x"], labels)
+    ]
+    
+    #exc_energy_table(table_data, mult)
+    
+    return f'Site {site} {mult} Excitation {dye}'
+
+
+
+marks = False
+
+#fig, ax = plt.subplots(figsize=(14,8))
+#s = publish_plot_exc_clean(2, '1D2', 'R610', ax, (1,0.001), marks)
+#s = publish_plot_exc_clean(2, '1D2', 'R590', ax, (3,0), marks)
+
+#fig, ax = plt.subplots(figsize=(14,8))
+#s = publish_plot_exc_clean(1, '1D2', 'R610', ax, (2,0.0002), marks)
+#s = publish_plot_exc_clean(1, '1D2', 'R590', ax, (1,0), marks)
+
+#fig, ax = plt.subplots(figsize=(14,8))
+#s = publish_plot_exc_clean(2, '3P0', 'C481', ax, (1,0.002), marks)
+#s = publish_plot_exc_clean(2, '1I6', 'C460', ax, (1,0.001), marks)
+#s = publish_plot_exc_clean(2, '3P2', 'C440', ax, (1,0), marks)
+
+#fig, ax = plt.subplots(figsize=(14,8))
+#s = publish_plot_exc_clean(1, '3P0', 'C481', ax, (1,0.002), marks)
+#s = publish_plot_exc_clean(1, '1I6', 'C460', ax, (1,0.001), marks)
+#s = publish_plot_exc_clean(1, '3P2', 'C440', ax, (1,0), marks)
+
+#plt.legend()
+
+
+#s = publish_plot_ab_clean('3H5', marks)
+#s = publish_plot_ab_clean('3H6', marks)
+#s = publish_plot_ab_clean('3F2', marks)
+#s = publish_plot_ab_clean('3F3+3F4', marks)
+#s = publish_plot_ab_clean('1G4', marks)
+#s = publish_plot_ab_clean('1D2', marks)
+#s = publish_plot_ab_clean('3P0', marks)
+
+#s = publish_plot_ab_clean_based('3H5', marks)
+#s = publish_plot_ab_clean_based('3H6', marks)
+#s = publish_plot_ab_clean_based('3F2', marks)
+#s = publish_plot_ab_clean_based('3F3+3F4', marks)
+#s = publish_plot_ab_clean_based('1G4', marks)
+s = publish_plot_ab_clean_based('1D2', marks)
+#s = publish_plot_ab_clean_based('3P0', marks)
+
+#s = publish_plot_em(2, '1D2', '3H4', marks)
+#s = publish_plot_em(1, '1D2', '3H4', marks)
+
+#s = publish_plot_em(2, '1D2', '3H5', marks)
+#s = publish_plot_em(1, '1D2', '3H5', marks)
+
+#s = publish_plot_em(2, '1D2', '3H6', marks)
+#s = publish_plot_em(1, '1D2', '3H6', marks)
+
+#s = publish_plot_em(2, '1D2', '3F2', marks)
+#s = publish_plot_em(1, '1D2', '3F2', marks)
+
+#s = publish_plot_em(2, '1D2', '3F3+3F4', marks)
+#s = publish_plot_em(1, '1D2', '3F3+3F4', marks)
+
+#s = publish_plot_em(2, '1D2', '1G4', marks)
+#s = publish_plot_em(1, '1D2', '1G4', marks)
+
+#plt.savefig('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Marked_Plots_Em/Plots for Jon/' +s +'.pdf', bbox_inches='tight', dpi=600, format='pdf')
+
 plt.show()
 
 
+
+'''
+s = publish_plot_em_clean(2, '1D2', '3F2')
+s = publish_plot_em_clean(1, '1D2', '3F2')
+
+plt.show()
+'''
+'''
 #simple_table('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Energy Levels/Assignment/site_2.txt')
 
-'''    
 fig, ax = plt.subplots(figsize=(16,8))
 site = 2
 fit = True
 excitation_plotter(site, ax, fit)
-
-w, a = exc_loader2(2, '3P2', 'C440', True, 2.58)
-ax.plot(w, a+0.1, label='Site 2: 3P2, C440 dye excitation TEST')
 
 site = 1
 excitation_plotter(site, ax, fit)
@@ -796,12 +1375,11 @@ ax.set_title(title)
 savename = title
 #plt.savefig('/home/users/ccl128/Documents/Spectra/2026Y2SiO5_Pr/Plots_Scope_Exc/' +savename +'.pdf', bbox_inches='tight', dpi=600, format='pdf')
 plt.show()
-    
-#==================================
+
+#=================================
 
 '''
 '''
-
 #super plot one site
 fig, ax = plt.subplots(figsize=(16,8))
 laser_fit = True
